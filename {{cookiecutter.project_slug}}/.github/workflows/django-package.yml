@@ -1,0 +1,44 @@
+name: Django Package CI/CD
+
+on:
+  push:
+    branches: [
+      main, # Push_case_1
+      master, # Push_case_1
+      develop, # Push_case_1
+      staging, # Push_case_2
+      production, # Push_case_3
+    ]
+    paths:
+      - '{{cookiecutter.app_slug}}/**'
+
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [
+      main, # PR_case_1
+      master, # PR_case_1
+      develop, # PR_case_1
+      staging, # PR_case_2
+      production, # PR_case_3
+    ]
+    paths:
+      - '{{cookiecutter.app_slug}}/**'
+
+  release:
+    types: [
+        prereleased, # Release_case_1
+        released, # Release_case_2
+      ]
+
+jobs:
+  django-packaging:
+    name: 📦 Django Packaging
+    permissions:
+      contents: write
+      packages: write
+    uses: actions-factory/risotech-github-actions/.github/workflows/base-django-package.yml@main
+    secrets:
+      DEVPI_URL: {% raw %}${{ secrets.DEVPI_URL }}{% endraw %}
+      DEVPI_TOKEN: {% raw %}${{ secrets.DEVPI_TOKEN }}{% endraw %}
+    with:
+      python-version: {% raw %}${{ vars.PYTHON_VERSION }}{% endraw %}
