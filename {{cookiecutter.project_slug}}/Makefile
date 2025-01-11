@@ -17,7 +17,7 @@ NC = \033[0m # No Color
 .DEFAULT_GOAL := help
 
 # Alias
-PROJECT_NAME := {{cookiecutter.project_name}}
+PROJECT_NAME := {{cookiecutter.project_slug}}
 PYTHON_VERSION ?= 3.12.8
 
 
@@ -65,6 +65,7 @@ dev-pip:
 # dev-sync
 .PHONY: dev-sync
 dev-sync: dev-pip
+	@pip install -r requirements.txt
 	@pip-sync
 	@pre-commit install
 
@@ -77,7 +78,6 @@ dev-compile: dev-pip
 # dev
 .PHONY: dev
 dev: dev-init dev-sync
-	@pip install -r requirements.txt
 	@echo "Done!"
 
 # test
