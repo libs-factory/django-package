@@ -72,7 +72,7 @@ dev-sync: dev-pip
 # dev-compile
 .PHONY: dev-compile
 dev-compile: dev-pip
-	@pip-compile --generate-hashes
+	@pip-compile
 	@pip-sync
 
 # dev
@@ -85,5 +85,15 @@ dev: dev-init dev-sync
 test:
 	@coverage run -m pytest --create-db -v && coverage report -m
 	@echo "Done!"
+
+# shell_plus
+.PHONY: shell_plus
+shell_plus:
+	@python manage.py shell_plus
+
+# runserver
+.PHONY: runserver
+runserver:
+	@python manage.py runserver_plus
 
 # Next
