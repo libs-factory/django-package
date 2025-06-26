@@ -1,0 +1,48 @@
+{
+  "name": "Dev Container",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "GITHUB_USERNAME": "{{ cookiecutter.github_username }}"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "configureZshAsDefaultShell": true,
+      "username": "vscode"
+    },
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/sshd:1": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts",
+      "nodeGypDependencies": true,
+      "nvmInstallPath": "/usr/local/share/nvm"
+    }
+  },
+  "mounts": [
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached",
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"{% if cookiecutter.mount_volumes_data | default(false) %},
+    "source=/Volumes/Data,target=/workspaces/root,type=bind,consistency=cached"{% endif %}
+  ],
+  "postCreateCommand": "/bin/bash .devcontainer/scripts/post-create.sh",
+  "postStartCommand": "/bin/bash .devcontainer/scripts/post-start.sh"{% if cookiecutter.devcontainer_ssh_port != "0" %},
+  "forwardPorts": [22],
+  "portsAttributes": {
+    "22": {
+      "label": "SSH",
+      "onAutoForward": "notify",
+      "elevateIfNeeded": true
+    }
+  },
+  "runArgs": ["--publish", "{{ cookiecutter.devcontainer_ssh_port }}:22"]{% endif %},
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh"
+      }
+    }
+  }
+}
