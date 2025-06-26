@@ -77,7 +77,7 @@ sudo apt-get install -y --no-install-recommends \
 log_info "Installing browser testing dependencies for Cypress..."
 sudo apt-get install -y --no-install-recommends \
     xvfb libgtk-3-0 libgbm-dev libnotify-dev \
-    libnss3 libxss1 libxtst6 xauth
+    libnss3 libxss1 libxtst6 xauth libasound2-dev
 {% endif %}
 
 # Fix bat command if installed as batcat
