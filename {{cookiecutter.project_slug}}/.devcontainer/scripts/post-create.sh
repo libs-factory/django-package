@@ -35,51 +35,154 @@ echo -e "${PURPLE}========================================${NC}"
 echo -e "${PURPLE}     POST-CREATE SCRIPT EXECUTION${NC}"
 echo -e "${PURPLE}========================================${NC}"
 
+# ========================================
+# SYSTEM PACKAGES INSTALLATION
+# ========================================
+
 # Update package lists
 log_info "Updating package lists..."
 sudo apt-get update
 
-# Install essential packages in categories
-log_info "Installing system utilities..."
+# ----------------------------------------
+# Core System Utilities
+# ----------------------------------------
+log_info "Installing core system utilities..."
 sudo apt-get install -y --no-install-recommends \
-    curl ca-certificates gnupg lsb-release \
-    locales sudo vim nano \
-    wget unzip zip
+    curl \
+    wget \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    locales \
+    sudo
 
+# ----------------------------------------
+# Text Editors
+# ----------------------------------------
+log_info "Installing text editors..."
+sudo apt-get install -y --no-install-recommends \
+    vim \
+    nano
+
+# ----------------------------------------
+# Archive Tools
+# ----------------------------------------
+log_info "Installing archive tools..."
+sudo apt-get install -y --no-install-recommends \
+    unzip \
+    zip
+
+# ----------------------------------------
+# Development Tools
+# ----------------------------------------
 log_info "Installing development tools..."
 sudo apt-get install -y --no-install-recommends \
-    git build-essential cmake pkg-config \
-    clang-format shellcheck
+    git \
+    build-essential \
+    cmake \
+    pkg-config
 
-log_info "Installing Python development dependencies..."
+# ----------------------------------------
+# Code Quality Tools
+# ----------------------------------------
+log_info "Installing code quality tools..."
 sudo apt-get install -y --no-install-recommends \
-    python3 python3-pip python3-venv python3-dev \
-    libssl-dev zlib1g-dev libbz2-dev libreadline-dev \
-    libsqlite3-dev libncursesw5-dev xz-utils tk-dev \
-    libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+    clang-format \
+    shellcheck
 
-log_info "Installing shell and terminal tools..."
+# ----------------------------------------
+# Python Development
+# ----------------------------------------
+log_info "Installing Python runtime and development packages..."
 sudo apt-get install -y --no-install-recommends \
-    zsh tmux htop tree jq \
-    ripgrep fd-find bat fzf
+    python3 \
+    python3-pip \
+    python3-venv \
+    python3-dev
 
-log_info "Installing network tools..."
+log_info "Installing Python build dependencies..."
 sudo apt-get install -y --no-install-recommends \
-    net-tools iputils-ping dnsutils \
+    libssl-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    libncursesw5-dev \
+    xz-utils \
+    tk-dev \
+    libxml2-dev \
+    libxmlsec1-dev \
+    libffi-dev \
+    liblzma-dev
+
+# ----------------------------------------
+# Shell and Terminal Tools
+# ----------------------------------------
+log_info "Installing shell environment..."
+sudo apt-get install -y --no-install-recommends \
+    zsh \
+    tmux
+
+log_info "Installing system monitoring tools..."
+sudo apt-get install -y --no-install-recommends \
+    htop \
+    tree
+
+log_info "Installing modern CLI tools..."
+sudo apt-get install -y --no-install-recommends \
+    jq \
+    ripgrep \
+    fd-find \
+    bat \
+    fzf
+
+# ----------------------------------------
+# Network Tools
+# ----------------------------------------
+log_info "Installing network utilities..."
+sudo apt-get install -y --no-install-recommends \
+    net-tools \
+    iputils-ping \
+    dnsutils
+
+log_info "Installing SSH server..."
+sudo apt-get install -y --no-install-recommends \
     openssh-server
 
+# ----------------------------------------
+# Database Clients
+# ----------------------------------------
 log_info "Installing database clients..."
 sudo apt-get install -y --no-install-recommends \
-    postgresql-client mysql-client redis-tools
+    postgresql-client \
+    mysql-client \
+    redis-tools
 
-# Install browser testing dependencies if needed
+# ----------------------------------------
+# Browser Testing Dependencies
+# ----------------------------------------
 {% if cookiecutter.use_cypress == "y" %}
 log_info "Installing browser testing dependencies for Cypress..."
 sudo apt-get install -y --no-install-recommends \
-    xvfb libgtk-3-0 libgbm-dev libnotify-dev \
-    libnss3 libxss1 libxtst6 xauth libasound2-dev
+    xvfb \
+    libgtk-3-0 \
+    libgbm-dev \
+    libnotify-dev \
+    libnss3 \
+    libxss1 \
+    libxtst6 \
+    xauth \
+    libasound2-dev \
+    ffmpeg
 {% endif %}
 
+# ========================================
+# POST-INSTALLATION CONFIGURATION
+# ========================================
+
+# ----------------------------------------
+# Fix Command Aliases
+# ----------------------------------------
 # Fix bat command if installed as batcat
 if command -v batcat &> /dev/null && ! command -v bat &> /dev/null; then
     log_info "Creating bat symlink..."
@@ -87,6 +190,13 @@ if command -v batcat &> /dev/null && ! command -v bat &> /dev/null; then
     log_success "bat command configured"
 fi
 
+# ========================================
+# DEVELOPMENT ENVIRONMENT SETUP
+# ========================================
+
+# ----------------------------------------
+# Python Version Management
+# ----------------------------------------
 # Install pyenv
 log_info "Installing pyenv..."
 if ! command -v pyenv &> /dev/null; then
@@ -110,11 +220,40 @@ else
     log_info "pyenv already installed"
 fi
 
+# ----------------------------------------
+# Node.js Tools
+# ----------------------------------------
+# Update npm
+log_info "Updating npm to the latest version..."
+if command -v npm &> /dev/null; then
+    npm install -g npm@latest
+    log_success "npm updated successfully"
+else
+    log_warning "npm not found, skipping npm update"
+fi
+
+# Install Claude Code globally if npm is available
+if command -v npm &> /dev/null; then
+    log_info "Installing Claude Code globally..."
+    npm install -g @anthropic-ai/claude-code
+    log_success "Claude Code installed globally"
+fi
+
+# ========================================
+# USER AND AUTHENTICATION SETUP
+# ========================================
+
+# ----------------------------------------
+# User Configuration
+# ----------------------------------------
 # Set default password for vscode user
 log_info "Setting up user authentication..."
 echo "vscode:vscode" | sudo chpasswd
 log_success "Default password set for vscode user (password: vscode)"
 
+# ----------------------------------------
+# SSH Configuration
+# ----------------------------------------
 # Configure SSH daemon
 {% if cookiecutter.devcontainer_ssh_port != "0" %}
 log_info "Configuring SSH daemon..."
@@ -144,6 +283,13 @@ sudo ssh-keygen -A
 log_success "SSH host keys generated"
 {% endif %}
 
+# ========================================
+# SHELL CUSTOMIZATION
+# ========================================
+
+# ----------------------------------------
+# Zsh Plugins and Themes
+# ----------------------------------------
 # Install Zsh plugins and themes
 log_info "Installing Zsh customizations..."
 if [ -d ~/.oh-my-zsh ]; then
@@ -220,6 +366,9 @@ EOF
     fi
 fi
 
+# ----------------------------------------
+# Shell Configuration Files
+# ----------------------------------------
 # Copy Powerlevel10k configuration
 if [ -f .devcontainer/configs/.p10k.zsh ]; then
     cp .devcontainer/configs/.p10k.zsh ~/.p10k.zsh
@@ -236,20 +385,9 @@ else
     log_warning "Powerlevel10k config file not found at .devcontainer/configs/.p10k.zsh"
 fi
 
-# Copy welcome script
-if [ -f .devcontainer/scripts/welcome.sh ]; then
-    cp .devcontainer/scripts/welcome.sh ~/welcome.sh
-    chmod +x ~/welcome.sh
-
-    # Add to shell profiles
-    if ! grep -q "welcome.sh" ~/.bashrc; then
-        echo '/bin/bash ~/welcome.sh' >> ~/.bashrc
-    fi
-    if ! grep -q "welcome.sh" ~/.zshrc; then
-        echo '/bin/bash ~/welcome.sh' >> ~/.zshrc
-    fi
-    log_success "Welcome message configured"
-fi
+# ========================================
+# CLEANUP
+# ========================================
 
 # Clean up apt cache to reduce image size
 log_info "Cleaning up package cache..."

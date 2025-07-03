@@ -40,6 +40,13 @@ echo -e "${PURPLE}========================================${NC}"
 echo -e "${PURPLE}     POST-START SCRIPT EXECUTION${NC}"
 echo -e "${PURPLE}========================================${NC}"
 
+# ========================================
+# RUNTIME PERMISSIONS AND CONFIGURATION
+# ========================================
+
+# ----------------------------------------
+# Docker Configuration
+# ----------------------------------------
 # Fix Docker permissions
 log_info "Fixing Docker permissions..."
 if [ -S /var/run/docker.sock ]; then
@@ -61,7 +68,13 @@ else
     log_warning "Docker socket not found at /var/run/docker.sock"
 fi
 
+# ========================================
+# SSH CONFIGURATION
+# ========================================
 
+# ----------------------------------------
+# SSH Directory Permissions
+# ----------------------------------------
 # Fix SSH permissions (runtime-specific because .ssh is mounted at runtime)
 log_info "Fixing SSH permissions..."
 if [ -d ~/.ssh ]; then
@@ -69,6 +82,9 @@ if [ -d ~/.ssh ]; then
     find ~/.ssh -type f -exec chmod 600 {} \;
     log_success "SSH permissions fixed"
 
+    # ----------------------------------------
+    # SSH Key Authentication Setup
+    # ----------------------------------------
     # Set up authorized_keys for SSH key authentication
     log_info "Setting up SSH key authentication..."
 
@@ -106,7 +122,13 @@ else
     log_warning "No ~/.ssh directory found"
 fi
 
+# ========================================
+# SERVICES STARTUP
+# ========================================
 
+# ----------------------------------------
+# SSH Service
+# ----------------------------------------
 # Start SSH service (runtime service)
 {% if cookiecutter.devcontainer_ssh_port != "0" %}
 log_info "Starting SSH service..."
@@ -124,6 +146,9 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     sleep 2
 done
 
+# ----------------------------------------
+# SSH Service Verification
+# ----------------------------------------
 # Verify SSH is running
 sleep 1
 if sudo service ssh status > /dev/null 2>&1; then
@@ -155,6 +180,13 @@ else
 fi
 {% endif %}
 
+# ========================================
+# SHELL ENVIRONMENT INITIALIZATION
+# ========================================
+
+# ----------------------------------------
+# Powerlevel10k Setup
+# ----------------------------------------
 # Source Powerlevel10k instant prompt if available
 if [ -f ~/.p10k.zsh ] && [ ! -f ~/.p10k-instant-prompt-${USER}.zsh ]; then
     log_info "Enabling Powerlevel10k instant prompt..."
@@ -162,8 +194,15 @@ if [ -f ~/.p10k.zsh ] && [ ! -f ~/.p10k-instant-prompt-${USER}.zsh ]; then
     touch ~/.p10k-instant-prompt-${USER}.zsh
 fi
 
+# ========================================
+# COMPLETION
+# ========================================
+
 echo -e "${PURPLE}========================================${NC}"
 echo -e "${GREEN}Post-start script completed!${NC}"
 echo -e "${PURPLE}========================================${NC}"
 
+# ========================================
+# CUSTOM RUNTIME COMMANDS
+# ========================================
 # Add any additional runtime-specific startup commands here as needed

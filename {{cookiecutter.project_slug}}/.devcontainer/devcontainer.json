@@ -28,7 +28,8 @@
     "source=/Volumes/Data,target=/workspaces/root,type=bind,consistency=cached"{% endif %}
   ],
   "postCreateCommand": "/bin/bash .devcontainer/scripts/post-create.sh",
-  "postStartCommand": "/bin/bash .devcontainer/scripts/post-start.sh"{% if cookiecutter.devcontainer_ssh_port != "0" %},
+  "postStartCommand": "/bin/bash .devcontainer/scripts/post-start.sh",
+  "postAttachCommand": "/bin/bash .devcontainer/scripts/post-attach.sh"{% if cookiecutter.devcontainer_ssh_port != "0" %},
   "forwardPorts": [22],
   "portsAttributes": {
     "22": {
