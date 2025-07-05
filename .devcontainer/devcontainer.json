@@ -29,15 +29,7 @@
   ],
   "postCreateCommand": "/bin/bash .devcontainer/scripts/post-create.sh",
   "postStartCommand": "/bin/bash .devcontainer/scripts/post-start.sh",
-  // "forwardPorts": [22],
-  // "portsAttributes": {
-  //   "22": {
-  //     "label": "SSH",
-  //     "onAutoForward": "notify",
-  //     "elevateIfNeeded": true
-  //   }
-  // },
-  // "runArgs": ["--publish", "2221:22"],
+  "postAttachCommand": "/bin/bash .devcontainer/scripts/post-attach.sh",
   "customizations": {
     "vscode": {
       "settings": {

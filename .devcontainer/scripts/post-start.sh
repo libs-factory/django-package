@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Post-start script for devcontainer
+# This script runs every time the container starts
+
+set -e
+
 # Enable logging
 LOG_FILE="/tmp/post-start.log"
 exec 1> >(tee -a "$LOG_FILE")
@@ -35,6 +40,13 @@ echo -e "${PURPLE}========================================${NC}"
 echo -e "${PURPLE}     POST-START SCRIPT EXECUTION${NC}"
 echo -e "${PURPLE}========================================${NC}"
 
+# ========================================
+# RUNTIME PERMISSIONS AND CONFIGURATION
+# ========================================
+
+# ----------------------------------------
+# Docker Configuration
+# ----------------------------------------
 # Fix Docker permissions (runtime-specific because socket is mounted at runtime)
 log_info "Fixing Docker permissions..."
 if [ -S /var/run/docker.sock ]; then
@@ -48,7 +60,7 @@ if [ -S /var/run/docker.sock ]; then
         sudo usermod -aG docker vscode
         log_success "Created docker group and added vscode user"
     fi
-
+    
     # Fix docker socket permissions
     sudo chmod 666 /var/run/docker.sock
     log_success "Docker socket permissions fixed"
@@ -56,24 +68,34 @@ else
     log_warning "Docker socket not found at /var/run/docker.sock"
 fi
 
+# ========================================
+# SSH CONFIGURATION
+# ========================================
+
+# ----------------------------------------
+# SSH Directory Permissions
+# ----------------------------------------
 # Fix SSH permissions (runtime-specific because .ssh is mounted at runtime)
 log_info "Fixing SSH permissions..."
 if [ -d ~/.ssh ]; then
     chmod 700 ~/.ssh
     find ~/.ssh -type f -exec chmod 600 {} \;
     log_success "SSH permissions fixed"
-
+    
+    # ----------------------------------------
+    # SSH Key Authentication Setup
+    # ----------------------------------------
     # Set up authorized_keys for SSH key authentication
     log_info "Setting up SSH key authentication..."
-
+    
     # Create authorized_keys file
     touch ~/.ssh/authorized_keys
     chmod 600 ~/.ssh/authorized_keys
-
+    
     # Fetch GitHub public keys if GITHUB_USERNAME is set
     if [ -n "$GITHUB_USERNAME" ] && [ "$GITHUB_USERNAME" != "your-github-username" ]; then
         log_info "Fetching SSH keys from GitHub user: $GITHUB_USERNAME"
-
+        
         if curl -sS "https://github.com/${GITHUB_USERNAME}.keys" >> ~/.ssh/authorized_keys 2>/dev/null; then
             log_success "GitHub SSH keys added for user: $GITHUB_USERNAME"
         else
@@ -83,7 +105,7 @@ if [ -d ~/.ssh ]; then
         log_warning "GITHUB_USERNAME not set or is default value"
         log_info "Set GITHUB_USERNAME in devcontainer.json to enable automatic SSH key setup"
     fi
-
+    
     # Also add local mounted keys if they exist
     if [ -f ~/.ssh/id_rsa.pub ] || [ -f ~/.ssh/id_ed25519.pub ]; then
         log_info "Adding local SSH keys to authorized_keys..."
@@ -91,7 +113,7 @@ if [ -d ~/.ssh ]; then
         [ -f ~/.ssh/id_ed25519.pub ] && cat ~/.ssh/id_ed25519.pub >> ~/.ssh/authorized_keys
         log_success "Local SSH keys added"
     fi
-
+    
     # Remove duplicates and empty lines
     sort -u ~/.ssh/authorized_keys | grep -v '^$' > ~/.ssh/authorized_keys.tmp
     mv ~/.ssh/authorized_keys.tmp ~/.ssh/authorized_keys
@@ -100,6 +122,13 @@ else
     log_warning "No ~/.ssh directory found"
 fi
 
+# ========================================
+# SERVICES STARTUP
+# ========================================
+
+# ----------------------------------------
+# SSH Service
+# ----------------------------------------
 # Start SSH service (runtime service)
 log_info "Starting SSH service..."
 sudo service ssh stop 2>/dev/null || true
@@ -116,21 +145,24 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     sleep 2
 done
 
+# ----------------------------------------
+# SSH Service Verification
+# ----------------------------------------
 # Verify SSH is running
 sleep 1
 if sudo service ssh status > /dev/null 2>&1; then
     log_success "SSH service started successfully"
-
+    
     # Check if SSH is actually listening
     if sudo ss -tlnp | grep :22 > /dev/null 2>&1 || sudo netstat -tlnp | grep :22 > /dev/null 2>&1; then
         log_success "SSH is listening on port 22"
-
+        
         # Display connection info
         log_info "SSH connection info:"
-        log_info "  - Port: 22 (mapped to host port 2221)"
+        log_info "  - Port: 22 (mapped to host port 2222)"
         log_info "  - Username: vscode"
         log_info "  - Password: vscode (or use SSH key)"
-
+        
         # Get container IP if possible
         CONTAINER_IP=$(hostname -I | awk '{print $1}')
         if [ -n "$CONTAINER_IP" ]; then
@@ -146,6 +178,13 @@ else
     sudo service ssh status
 fi
 
+# ========================================
+# SHELL ENVIRONMENT INITIALIZATION
+# ========================================
+
+# ----------------------------------------
+# Powerlevel10k Setup
+# ----------------------------------------
 # Source Powerlevel10k instant prompt if available
 if [ -f ~/.p10k.zsh ] && [ ! -f ~/.p10k-instant-prompt-${USER}.zsh ]; then
     log_info "Enabling Powerlevel10k instant prompt..."
@@ -153,8 +192,15 @@ if [ -f ~/.p10k.zsh ] && [ ! -f ~/.p10k-instant-prompt-${USER}.zsh ]; then
     touch ~/.p10k-instant-prompt-${USER}.zsh
 fi
 
+# ========================================
+# COMPLETION
+# ========================================
+
 echo -e "${PURPLE}========================================${NC}"
 echo -e "${GREEN}Post-start script completed!${NC}"
 echo -e "${PURPLE}========================================${NC}"
 
+# ========================================
+# CUSTOM RUNTIME COMMANDS
+# ========================================
 # Add any additional runtime-specific startup commands here as needed
